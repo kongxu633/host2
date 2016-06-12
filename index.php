@@ -59,7 +59,7 @@ class IqiyiIE{
 
         $url = $this->_tests[$member]['url'];
 
-        $webpage = $this->_cget($url);  // url source
+        //$webpage = $this->_cget($url);  // url source
         $playlist_result = [];          // _extract_playlist
 
         $tvid = $this->_tests[$member]['tvid'];
@@ -70,13 +70,46 @@ class IqiyiIE{
         $raw_data = $this->get_raw_data($tvid,$video_id,$enc_key,$_uuid);
 
 
+        if(!is_array($raw_data) || $raw_data['code'] != 'A000000'){
+            // error
+            die('Unable to load data at line : '.__LINE__);
+        }
+
+        //print_r($raw_data);
+
+
+
 
 
     }
 
     public function get_raw_data($tvid,$video_id,$enc_key,$_uuid)
     {
+        $tm = time();
+        $tail = $tm . $tvid;
+        $param = [
+            'key'=> 'fvip',
+            'src'=> md5('youtube-dl'),
+            'tvId'=> $tvid,
+            'vid'=> $video_id,
+            'vinfo'=> 1,
+            'tm'=> $tm,
+            'enc'=> md5($enc_key . $tail),
+            'qyid'=> $_uuid,
+            'tn'=> mt_rand(),
+            'um'=> 1,
+            'authkey'=> md5(md5('') . $tail),
+            'k_tag'=> 1,
+        ];
 
+        $query = http_build_query($param);
+        $api_url = 'http://cache.video.qiyi.com/vms' . '?' . $query;
+
+        //echo $api_url;
+
+        $raw_data = json_decode($this->_cget($api_url),true);
+
+        return $raw_data;
     }
 
     public function get_enc_key()
