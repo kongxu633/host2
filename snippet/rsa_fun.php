@@ -94,6 +94,49 @@ print pow(3689065395054797921,65537,89835569700828060722611132983709590761428931
 
 
 
+$result = str_baseconvert('ab86b6371b5318aaa1d3c9e612a9f1264f372323c8c0f19875b5fc3b3fd3afcc1e5bec527aa94bfa85bffc157e4245aebda05389a5357b75115ac94f074aefcd',16,10);
+
+echo '16进制数转10进制,得到最终结果:';
+echo '<br>';
+echo $result;
+echo '<br>';
+echo '--------------<br>';
+
+
+/**
+ * http://php.net/manual/zh/function.base-convert.php#109660
+ * 任意进制间的相互转换
+ *
+ * @param $str
+ * @param int $frombase
+ * @param int $tobase
+ * @return int|string
+ */
+function str_baseconvert($str, $frombase=10, $tobase=36) {
+    $str = trim($str);
+    if (intval($frombase) != 10) {
+        $len = strlen($str);
+        $q = 0;
+        for ($i=0; $i<$len; $i++) {
+            $r = base_convert($str[$i], $frombase, 10);
+            $q = bcadd(bcmul($q, $frombase), $r);
+        }
+    }
+    else $q = $str;
+
+    if (intval($tobase) != 10) {
+        $s = '';
+        while (bccomp($q, '0', 0) > 0) {
+            $r = intval(bcmod($q, $tobase));
+            $s = base_convert($r, 10, $tobase) . $s;
+            $q = bcdiv($q, $tobase, 0);
+        }
+    }
+    else $s = $q;
+
+    return $s;
+}
+
 /**
  * 十进制数转换成其它进制
  * 可以转换成2-62任何进制
