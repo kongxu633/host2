@@ -28,11 +28,14 @@ echo '--------------<br>';
 
 
 $mima = 'admin123';
+/*
 $arr = str_split($mima);
 $hex_str = '';
 for($i=count($arr)-1;$i>=0;$i--){
     $hex_str .= dechex(ord($arr[$i]));
 }
+*/
+$hex_str = bin2hex(strrev($mima));
 
 echo '计算倒叙结果:';
 echo '<br>';
