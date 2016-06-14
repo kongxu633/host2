@@ -48,9 +48,29 @@ class IqiyiIE{
         self::_login();
     }
 
-    public static function _login()
+    public function _login()
     {
-        echo 'haha';
+        //echo 'haha';
+        $token_url = 'http://kylin.iqiyi.com/get_token';
+        $token_str = $this->_cget($token_url);
+        $token_json = json_decode($token_str,True);
+
+        $data_code = $token_json['code'];
+        $data_sdk = $token_json['sdk'];
+
+        $unpacker = new JavascriptUnpacker;
+
+        $unpack_js =$unpacker->unpack($data_sdk);
+
+        $this->dd($unpack_js,'unpacked js to txt');
+
+        $functions = [];
+        if(preg_match_all("/input=([a-zA-Z0-9]+)\(input/",$unpack_js,$matches)){
+            $functions = $matches[1];
+        }
+
+        $this->dd($functions,'check out the functions');
+
     }
 
     public function _real_extract($url)
@@ -77,11 +97,53 @@ class IqiyiIE{
 
         //print_r($raw_data);
 
+        $data = $raw_data['data'];
+
+        $title = $data['vi']['vn'];
+
+        // generate video_urls_dict
+        $video_urls_dict = $this->construct_video_urls($data, $video_id, $_uuid, $tvid);
 
 
 
 
     }
+
+    public function _authenticate_vip_video($api_video_url, $video_id, $tvid, $_uuid, $do_report_warning)
+    {
+        $auth_params = [
+        // version and platform hard-coded in com/qiyi/player/core/model/remote/AuthenticationRemote.as
+        'version'=>'2.0',
+            'platform'=>'b6c13e26323c537d',
+            'aid'=>$tvid,
+            'tvid'=>$tvid,
+            'uid'=>'',
+            'deviceId'=>$_uuid,
+            'playType'=>'main',  // XXX: always main?
+            'filename'=>''  // os.path.splitext(url_basename(api_video_url))[0],
+            // print_r(parse_url($api_video_url));
+        ];
+
+
+
+
+
+    }
+    public function construct_video_urls($data, $video_id, $_uuid, $tvid)
+    {
+        $video_urls_dict = [];
+        $need_vip_warning_report = True;
+        /*
+        foreach($data['vp']['tk'][0]['vs'] as $format_item){
+
+            print_r($format_item);
+        }
+        */
+        return '';
+
+    }
+
+
 
     public function get_raw_data($tvid,$video_id,$enc_key,$_uuid)
     {
@@ -171,11 +233,14 @@ class IqiyiIE{
             echo "----------------\n<br/>";
             echo $msg,' : ';
         }
-        echo $data;
-        echo "\n<br/>";
+
         if(is_array($data)){
             echo '<pre>';
             print_r($data);
+        }else{
+            echo "\n<br/>";
+            echo $data;
+            echo "\n<br/>";
         }
     }
 
@@ -184,7 +249,78 @@ class IqiyiIE{
 
 $obj = new IqiyiIE();
 $obj -> _real_initialize();
+//$obj -> _login();
 $obj -> _real_extract('real url defined in _tests');
 
 
-
+class JavaScriptUnpacker
+{
+    protected $alphabet = array(
+        52 => '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOP',
+        54 => '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQR',
+        62 => '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
+        95 => ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~'
+    );
+    private $base;
+    private $map;
+    public function unpack($source, $dynamicHeader = true)
+    {
+        if (! $this->isPacked($source, $dynamicHeader)) {
+            return $source;
+        }
+        preg_match("/}\('(.*)',\s*(\d+),\s*(\d+),\s*'(.*?)'\.split\('\|'\)/", $source, $match);
+        $payload = $match[1];
+        $this->base = (int) $match[2];
+        $count = (int) $match[3];
+        $this->map = explode('|', $match[4]);
+        if ($count != count($this->map)) {
+            return $source;
+        }
+        $result = preg_replace_callback('#\b\w+\b#', array($this, 'lookup'), $payload);
+        $result = strtr($result, array('\\' => ''));
+        return $result;
+    }
+    public function isPacked($source, $dynamicHeader = true)
+    {
+        $header = $dynamicHeader ? '\w+,\w+,\w+,\w+,\w+,\w+' : 'p,a,c,k,e,[rd]';
+        $source = strtr($source, array(' ' => ''));
+        return (bool) preg_match('#^eval\(function\('.$header.'\){#i', trim($source));
+    }
+    protected function lookup($match)
+    {
+        $word = $match[0];
+        $unbased = $this->map[$this->unbase($word, $this->base)];
+        return $unbased ? $unbased : $word;
+    }
+    protected function unbase($value, $base)
+    {
+        if (2 <= $base && $base <= 36) {
+            return intval($value, $base);
+        }
+        static $dict = array();
+        $selector = $this->getSelector($base);
+        if (empty($dict[$selector])) {
+            $dict[$selector] = array_flip(str_split($this->alphabet[$selector]));
+        }
+        $result = 0;
+        $array = array_reverse(str_split($value));
+        for ($i = 0, $count = count($array); $i < $count; $i++) {
+            $cipher = $array[$i];
+            $result += pow($base, $i) * $dict[$selector][$cipher];
+        }
+        return $result;
+    }
+    protected function getSelector($base)
+    {
+        if ($base > 62) {
+            return 95;
+        }
+        if ($base > 54) {
+            return 62;
+        }
+        if ($base > 52) {
+            return 54;
+        }
+        return 52;
+    }
+}
