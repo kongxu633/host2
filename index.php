@@ -71,6 +71,12 @@ class IqiyiIE{
 
         $this->dd($functions,'check out the functions');
 
+        foreach($functions as $func){
+            if(preg_match('/mod\d+/i',$func,$matches)){
+                // 进行计算了
+            }
+        }
+
     }
 
     public function _real_extract($url)
@@ -252,6 +258,54 @@ $obj -> _real_initialize();
 //$obj -> _login();
 $obj -> _real_extract('real url defined in _tests');
 
+
+/*$obj = new IqiyiSDK();
+$a = $obj->_mod('a','127.0.0.1',11);
+echo $a;
+echo '<br>';
+$b = $obj->_mod($a,'127.0.0.1',13);
+echo $b;
+echo '<br>';
+$c = $obj->_mod($b,'127.0.0.1',7);
+echo $c;
+echo '<br>';*/
+
+
+class IqiyiSDK{
+    /*
+     * 对于大整数，php会出现溢出，可能返回负数情况, 这是因为php默认使用整数取余的，所以你要把它转换成float类型：
+     * */
+    function Kmod($bn, $sn)
+    {
+        return intval(fmod(floatval($bn), $sn));
+    }
+
+    public static function _mod($target,$ip,$num)
+    {
+        $md5_str = md5($target);
+        $ip_arr = explode('.',$ip);
+        foreach($ip_arr as $v){
+            $md5_str .= $v % $num;
+        }
+
+        return $md5_str;
+    }
+
+    public static function _split4($target, $ip)
+    {
+
+    }
+    public static function _split5($target, $ip)
+    {
+
+    }
+    public static function _split8($target, $ip)
+    {
+
+    }
+
+
+}
 
 class JavaScriptUnpacker
 {
