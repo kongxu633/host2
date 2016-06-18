@@ -57,6 +57,14 @@ class IqiyiIE{
 
         $data_code = $token_json['code'];
         $data_sdk = $token_json['sdk'];
+        $data_ip = $token_json['ip'];
+        $data_token = $token_json['token'];
+
+        if($data_code == 'A00000'){
+            $this->dd($data_code,'token_code');
+            $this->dd($data_ip,'token_ip');
+            $this->dd($data_token,'token_token');
+        }
 
         $unpacker = new JavascriptUnpacker;
 
@@ -71,14 +79,149 @@ class IqiyiIE{
 
         $this->dd($functions,'check out the functions');
 
+
+        $email = '';
+        $passwd= '';
+        $timestamp = time();
+        $target = "/apis/reglogin/login.action?email={$email}&passwd={$passwd}&agenttype=1&from=undefined&keeplogin=1&piccode=&fromurl=%23&_pos=1";
+
+        $func = '';
+
+        $sign = '';
         foreach($functions as $func){
-            if(preg_match('/mod\d+/i',$func,$matches)){
-                // 进行计算了
-            }
+            $sign = $this->IqiyiSDK($target, $data_ip, $timestamp, $func);
         }
+        //$sign = $this->IqiyiSDK($target, $data_ip, $timestamp, $func);
+
+        //$sign = 'db875be4c2605c127875afc6804376af16062016';
+
+        $validation_params = [
+            'target' => $target,
+            'server' => 'BEA3AA1908656AABCCFF76582C4C6660',
+            'token' => $data_token,
+            'bird_src' => 'eb8d221bc0c04c5ab4ba735b6b1560a1',
+            'sign' => $sign,
+            'bird_t' => $timestamp,
+        ];
+
+        $this->dd($validation_params);
+
+        $validation_url = 'http://kylin.iqiyi.com/validate?' . http_build_query($validation_params);
+
+        $this->dd($validation_url);
+
+        $validation_result = $this->_cget($validation_url);
+
+        $this->dd($validation_result);
+
 
     }
 
+    public function IqiyiSDK($target,$ip,$timestamp,$func)
+    {
+
+        $md5_str = md5($target);
+        $ip_arr = explode('.',$ip);
+
+        if(preg_match('/mod(\d+)/i',$func,$matches))
+        {
+            foreach($ip_arr as $v){
+                $md5_str .= $v % intval($matches[1]);
+            }
+            return $md5_str;
+        }
+        if(preg_match('/date([ymd]{3})/i',$func,$matches))
+        {
+            $_y = date('Y',$timestamp);
+            $_m = date('m',$timestamp);
+            $_d = date('d',$timestamp);
+            $_r = $matches[1];
+
+            $_r = str_replace(['y','m','d'],[$_y,$_m,$_d],$_r);
+            $md5_str .= $_r;
+
+            return $md5_str;
+        }
+        if(preg_match('/split([458]{1})/i',$func,$matches)){
+
+            $_num = $matches[1];
+
+            $mod_arr = [
+                '4' => 256,
+                '5' => 10,
+                '8' => 100,
+            ];
+
+            $tmp = preg_replace('/(\w{'.$_num.'})/i','$1#',$md5_str,4);
+            $tmp_arr = explode('#',$tmp);
+
+            $_r = '';
+            for($i=0;$i<4;$i++){
+                if($_num > 5 || $_num == 8){
+                    $_r .= $ip_arr[$i] % $mod_arr[$_num] . $tmp_arr[$i];
+                }else {
+                    $_r .= $tmp_arr[$i] . $ip_arr[$i] % $mod_arr[$_num];
+                }
+            }
+            $_r .= $tmp_arr[4];
+
+            return $_r;
+        }
+        if($func == 'handleInput8'){
+            $arr = str_split($md5_str,8);
+            $tmp = '';
+            foreach($arr as $v){
+                $sum = 0;
+                for($i=0;$i<8;$i++){
+                    $sum += hexdec($v[$i]);
+                }
+                $tmp .= $sum . $v;
+            }
+            return $tmp;
+        }
+        if($func == 'handleInput16'){
+            $arr = str_split($md5_str,16);
+
+            $sum = 0;
+            for($i=0;$i<16;$i++){
+                $sum += hexdec($arr[0][$i]);
+            }
+
+            $tmp = $sum . $md5_str;
+
+            $sum = 0;
+            for($i=0;$i<16;$i++){
+                $sum += hexdec($arr[1][$i]);
+            }
+
+            $tmp = $tmp . $sum;
+
+            return $tmp;
+        }
+        if($func == 'splitTimeOddEven'){
+
+        }
+        if($func == 'splitTimeEvenOdd'){
+
+        }
+        if($func == 'handleSum'){
+            $sum = 0;
+            for($i=0;$i<32;$i++){
+                $sum += hexdec($md5_str[$i]);
+            }
+            return $sum . $md5_str;
+        }
+        if($func == 'splitTimeIpSum'){
+
+        }
+        if($func == 'splitIpTimeSum'){
+
+        }
+
+
+        //return '';
+
+    }
     public function _real_extract($url)
     {
         $member = $this->_member;
@@ -214,22 +357,12 @@ class IqiyiIE{
 
     public function _cget($url)
     {
-        //初始化
         $ch = curl_init();
-
-        //设置选项，包括URL
         curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_HEADER, 0);
-
-        //执行并获取HTML文档内容
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         $output = curl_exec($ch);
-
-        //释放curl句柄
         curl_close($ch);
-
-        //打印获得的数据
-        //print_r($output);
         return $output;
     }
 
@@ -254,9 +387,17 @@ class IqiyiIE{
 
 
 $obj = new IqiyiIE();
-$obj -> _real_initialize();
+//$obj -> _real_initialize();
 //$obj -> _login();
-$obj -> _real_extract('real url defined in _tests');
+//$obj -> _real_extract('real url defined in _tests');
+
+$target = 'a';
+$ip = '127.0.0.1';
+$timestamp = time();
+$func = 'handleInput16';
+
+$r = $obj -> IqiyiSDK($target,$ip,$timestamp,$func);
+echo $r;
 
 
 /*$obj = new IqiyiSDK();
@@ -303,7 +444,20 @@ class IqiyiSDK{
     {
 
     }
+    public static function _dateymd($target,$ip){
 
+    }
+    public static function _datemdy($target,$ip){
+
+    }
+    public static function _datedmy($target,$ip){
+
+    }
+
+    public function split_sum($data)
+    {
+        explode($data);
+    }
 
 }
 

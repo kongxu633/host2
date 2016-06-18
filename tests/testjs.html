@@ -7,9 +7,8 @@
 <body>
 <script>
 
-    input = 'a';
-    ip = '127.0.0.1';
-    timeStamp = Math.round(new Date().getTime()/1000);
+
+
 
     var md5 = function() {
         var r = function(r, n) {
@@ -273,123 +272,22 @@
             return ""
         }
     };
-    function mod11(r, n) {
-        var t = function() {
-            r = md5(r)
-        };
-
-        var a = function(r, n) {
-            return r != n
-        };
-        r += "";
-        try {
-            var o = function() {
-                r = md5(r)
-            };
-            location && navigator && window ? o() : ""
-        } catch(i) {
-            r = r + "lnw"
-        }
-        a(r.length, 32) ? t() : "";
-        var e = k0touZ.z0.p0("79") ? ".": n.split(".");
-        var u = function() {
-            r += a[v] % 7;
-            var t = function() {
-                r = md5(r)
-            };
-            var a = k0touZ.z0.p0("c541") ? 0 : n.split(".");
-            r = md5(r);
-            r = md5(r);
-            var o = function() {
-                r = md5(r)
-            };
-            r += "";
-            var i = function() {
-                r = md5(r)
-            };
-            var a = k0touZ.z0.p0("79") ? ".": n.split(".")
-        };
-        for (var v = 0; v < e.length; v++) {
-            r += e[v] % 11
-        }
-        var f = function() {
-            a(r.length, 32) ? nqSOs() : "";
-            location && navigator && isNaN ? lyTfS() : ""
-        };
-        return r
-    }
-    //input = mod11(input, ip);
-    //console.log(input);
-    function mod13(r, n) {
-        var t = function() {
-            r = md5(r)
-        };
-        var a = function(r, n) {
-            return r != n
-        };
-        r += "";
-        var o = function() {
-            r = md5(r);
-            r = md5(r);
-            a(r.length, 32) ? WSNLb() : ""
-        };
-        try {
-            var i = function() {
-                r = md5(r)
-            };
-            location && navigator && isNaN ? i() : ""
-        } catch(e) {
-            r = r + "lnnan"
-        }
-        var u = function() {
-            r = md5(r);
-            r += v[f] % 13;
-            r = r + "locationnavigator"
-        };
-        a(r.length, 32) ? t() : "";
-        var v = k0touZ.z0.p0("3b96") ? n.split(".") : 7;
-        for (var f = 0; f < v.length; f++) {
-            r += v[f] % 13
-        }
-        return r
-    }
-    //input = mod13(input, ip);
-    //console.log(input);
-    function mod7(r, n) {
-        var t = function() {
-            r = md5(r)
-        };
-        var a = function(r, n) {
-            return r != n
-        };
-        r += "";
-        try {
-            var o = function() {
-                r = md5(r)
-            };
-            location && navigator ? o() : ""
-        } catch(i) {
-            r = r + "locationnavigator"
-        }
-        a(r.length, 32) ? t() : "";
-        var e = k0touZ.z0.p0("3e45") ? ".": n.split(".");
-        for (var u = 0; u < e.length; u++) {
-            r += e[u] % 7
-        }
-        var v = function() {
-            r += e[u] % 7;
-            var n = function() {
-                r = md5(r)
-            };
-            r += ""
-        };
-        return r
-    }
-    //input = mod7(input, ip);
-    //console.log(input);
 
 
 
+    input = 'a';
+    ip = '127.0.0.1';
+    timeStamp = Math.round(new Date().getTime()/1000);
+    //document.write(mod13(input,ip));
+    //input = mod13(input, ip);//0cc175b9c0f1b6a831c399e26977266110001
+    //input = mod7(input,ip);//0cc175b9c0f1b6a831c399e2697726611001
+    //input = dateydm(input,timeStamp);//0cc175b9c0f1b6a831c399e26977266120161806
+    //input = split4(input,ip);//0cc112775b90c0f10b6a8131c399e269772661
+    //input = split5(input,ip);//0cc1775b9c00f1b6a0831c3199e269772661
+    //input = split8(input,ip);//270cc175b90c0f1b6a8031c399e2169772661
+    //input = handleSum(input);//2170cc175b90c0f1b6a8031c399e2169772661
+    input = handleInput16(input);
+    console.log(input);
 
 
 
@@ -1106,10 +1004,6 @@
     input = handleInput8(input);
 
 
-    input = 'a';
-    ip = '127.0.0.1';
-    timeStamp = Math.round(new Date().getTime()/1000);
-
     function dateymd(t, r) {
         var e = function() {
             t = md5(t)
@@ -1154,10 +1048,6 @@
     input = dateymd(input, timeStamp);
 
 
-
-    input = 'a';
-    ip = '127.0.0.1';
-    timeStamp = Math.round(new Date().getTime()/1000);
     function datedmy(t, r) {
         var e = function() {
             t = md5(t)
@@ -1222,10 +1112,6 @@
     input = datedmy(input, timeStamp);
 
 
-
-    input = 'a';
-    ip = '127.0.0.1';
-    timeStamp = Math.round(new Date().getTime()/1000);
     function datemdy(t, r) {
         var e = function() {
             t = md5(t)
