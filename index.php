@@ -1,5 +1,7 @@
 <?php
 
+include "config.php";
+
 class IqiyiIE{
     const IE_NAME = 'iqiyi';
     const IE_DESC = '爱奇艺';
@@ -7,6 +9,10 @@ class IqiyiIE{
     const ENC_KEY = '4a1caba4b4465345366f28da7c117d20';
 
     const _VALID_URL = '/https?:\/\/(?:(?:[^.]+\.)?iqiyi\.com|www\.pps\.tv)/.+\.html/i';
+
+    private $_email  = '';
+    private $_passwd = '';
+    private $_cookie = '';
 
     // normal
     // $url = 'http://www.iqiyi.com/v_19rrlsltj4.html';
@@ -33,9 +39,11 @@ class IqiyiIE{
 
     public $_member = 'vip';
 
-    public function __construct()
+    public function __construct($email='',$passwd='')
     {
-        echo self::IE_NAME,'-',self::IE_DESC,'-',$this->now(),'<br/>';
+        $this->_email = $email;
+        $this->_passwd = $passwd;
+        //echo self::IE_NAME,'-',self::IE_DESC,'-',$this->now(),'<br/>';
     }
 
     public function now()
@@ -50,9 +58,12 @@ class IqiyiIE{
 
     public function _login()
     {
-        //echo 'haha';
         $token_url = 'http://kylin.iqiyi.com/get_token';
         $token_str = $this->_cget($token_url);
+        
+        $timestamp = time();
+        $target = '/apis/reglogin/login.action?email='.$this->_email.'&passwd='.$this->_passwd.'&agenttype=1&from=undefined&keeplogin=1&piccode=&fromurl=%23&_pos=1';
+
         $token_json = json_decode($token_str,True);
 
         $data_code = $token_json['code'];
@@ -64,6 +75,7 @@ class IqiyiIE{
             $this->dd($data_code,'token_code');
             $this->dd($data_ip,'token_ip');
             $this->dd($data_token,'token_token');
+            $this->dd($timestamp,'timestamp');
         }
 
         $unpacker = new JavascriptUnpacker;
@@ -79,21 +91,10 @@ class IqiyiIE{
 
         $this->dd($functions,'check out the functions');
 
-
-        $email = '';
-        $passwd= '';
-        $timestamp = time();
-        $target = "/apis/reglogin/login.action?email={$email}&passwd={$passwd}&agenttype=1&from=undefined&keeplogin=1&piccode=&fromurl=%23&_pos=1";
-
-        $func = '';
-
-        $sign = '';
+        $sign = $target;
         foreach($functions as $func){
-            $sign = $this->IqiyiSDK($target, $data_ip, $timestamp, $func);
+            $sign = $this->IqiyiSDK($sign, $data_ip, $timestamp, $func);
         }
-        //$sign = $this->IqiyiSDK($target, $data_ip, $timestamp, $func);
-
-        //$sign = 'db875be4c2605c127875afc6804376af16062016';
 
         $validation_params = [
             'target' => $target,
@@ -110,9 +111,13 @@ class IqiyiIE{
 
         $this->dd($validation_url);
 
-        $validation_result = $this->_cget($validation_url);
+        //$validation_result = $this->_cget($validation_url);
 
-        $this->dd($validation_result);
+        //$this->dd($validation_result);
+
+        $result_cookies = $this->http_cookies($validation_url);
+
+        var_dump($result_cookies);
 
 
     }
@@ -122,6 +127,7 @@ class IqiyiIE{
 
         $md5_str = md5($target);
         $ip_arr = explode('.',$ip);
+        $time_arr = str_split($timestamp);
 
         if(preg_match('/mod(\d+)/i',$func,$matches))
         {
@@ -199,10 +205,18 @@ class IqiyiIE{
             return $tmp;
         }
         if($func == 'splitTimeOddEven'){
-
+            $o_sum = $e_sum = 0;
+            for($i=0;$i<10;$i++){
+                $i % 2 == 0 ? $o_sum += $time_arr[$i] : $e_sum += $time_arr[$i];
+            }
+            return $o_sum . $md5_str . $e_sum;
         }
         if($func == 'splitTimeEvenOdd'){
-
+            $o_sum = $e_sum = 0;
+            for($i=0;$i<10;$i++){
+                $i % 2 == 0 ? $o_sum += $time_arr[$i] : $e_sum += $time_arr[$i];
+            }
+            return $e_sum . $md5_str . $o_sum;
         }
         if($func == 'handleSum'){
             $sum = 0;
@@ -212,10 +226,16 @@ class IqiyiIE{
             return $sum . $md5_str;
         }
         if($func == 'splitTimeIpSum'){
+            $ip_sum = array_sum($ip_arr);
+            $time_sum = array_sum($time_arr);
 
+            return $time_sum . $md5_str . $ip_sum;
         }
         if($func == 'splitIpTimeSum'){
+            $ip_sum = array_sum($ip_arr);
+            $time_sum = array_sum($time_arr);
 
+            return $ip_sum . $md5_str . $time_sum;
         }
 
 
@@ -355,6 +375,42 @@ class IqiyiIE{
         return $status;
     }
 
+    public function http_cookies($url)
+    {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_HEADER, 1);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $content = curl_exec($ch);
+        curl_close($ch);
+        list($header, $body) = explode("\r\n\r\n", $content);
+        preg_match("/set\-cookie:([^\r\n]*)/i", $header, $matches);
+        $cookie = $matches[1];
+        return $cookie;
+    }
+
+    function get_url_content($url,$cookie='',$data='',$ref=''){
+        $ch = curl_init();
+        curl_setopt($ch,CURLOPT_URL,$url);
+        curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
+        $header = array();
+        if($ref != '')
+            $header[] = 'Referer: '.$ref;
+        if($cookie != '')
+            $header[] = 'Cookie: '.$cookie;
+        $header[] = 'User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.87 Safari/537.36 QQBrowser/9.2.5584.400';
+        curl_setopt($ch,CURLOPT_HTTPHEADER, $header);
+        curl_setopt($ch,CURLOPT_FOLLOWLOCATION,1);
+        if($data != ''){
+            curl_setopt($ch,CURLOPT_POST,1);
+            curl_setopt($ch,CURLOPT_POSTFIELDS,$data);
+        }
+        curl_setopt($ch,CURLOPT_TIMEOUT,3);
+        $content = curl_exec($ch);
+        curl_close($ch);
+        return $content;
+    }
+
     public function _cget($url)
     {
         $ch = curl_init();
@@ -386,80 +442,12 @@ class IqiyiIE{
 }
 
 
-$obj = new IqiyiIE();
+$obj = new IqiyiIE($email,$passwd);
 //$obj -> _real_initialize();
-//$obj -> _login();
+$obj -> _login();
 //$obj -> _real_extract('real url defined in _tests');
 
-$target = 'a';
-$ip = '127.0.0.1';
-$timestamp = time();
-$func = 'handleInput16';
 
-$r = $obj -> IqiyiSDK($target,$ip,$timestamp,$func);
-echo $r;
-
-
-/*$obj = new IqiyiSDK();
-$a = $obj->_mod('a','127.0.0.1',11);
-echo $a;
-echo '<br>';
-$b = $obj->_mod($a,'127.0.0.1',13);
-echo $b;
-echo '<br>';
-$c = $obj->_mod($b,'127.0.0.1',7);
-echo $c;
-echo '<br>';*/
-
-
-class IqiyiSDK{
-    /*
-     * 对于大整数，php会出现溢出，可能返回负数情况, 这是因为php默认使用整数取余的，所以你要把它转换成float类型：
-     * */
-    function Kmod($bn, $sn)
-    {
-        return intval(fmod(floatval($bn), $sn));
-    }
-
-    public static function _mod($target,$ip,$num)
-    {
-        $md5_str = md5($target);
-        $ip_arr = explode('.',$ip);
-        foreach($ip_arr as $v){
-            $md5_str .= $v % $num;
-        }
-
-        return $md5_str;
-    }
-
-    public static function _split4($target, $ip)
-    {
-
-    }
-    public static function _split5($target, $ip)
-    {
-
-    }
-    public static function _split8($target, $ip)
-    {
-
-    }
-    public static function _dateymd($target,$ip){
-
-    }
-    public static function _datemdy($target,$ip){
-
-    }
-    public static function _datedmy($target,$ip){
-
-    }
-
-    public function split_sum($data)
-    {
-        explode($data);
-    }
-
-}
 
 class JavaScriptUnpacker
 {
