@@ -13,7 +13,7 @@
 
 */
 
-
+    error_reporting(0);
 
     header('Content-Type:text/html;charset=UTF-8');
 
@@ -82,14 +82,14 @@
 
     //die();
 
-    $ckid = 'http://www.iqiyi.com/v_19rrlsmnak.html';//vip
+    $ckid = 'http://www.iqiyi.com/v_19rrldv28w.html';//vip
 
     //$ckid = 'http://www.iqiyi.com/v_19rrlsltj4.html';
 
     $sysary = array(
 
         '奇艺VIP',
-        'http://www.5mrk.com',
+        'http://www.iqiyi.com',
 
         'http://www.baidu.com/404.mp4'
     );
@@ -150,9 +150,9 @@
             $ary3 = array();
             $ary4 = array();
             if($iqiyiary[0]){
-                echo "this is a vip url... <br/>";
+                //echo "this is a vip url... <br/>";
                 //die();
-                $vipcookie = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
+                $vipcookie = 'P00001=8b8DbBtSRQ3vb1m1H7yE72RDhtMdGAm1SawrlQa3N39vyrwu1ZPBVORdfZm3XMDm2HkRm1594; Domain=.iqiyi.com; Expires=Sat, 17-Sep-2016 06:11:46 GMT; Path=/';
                 $ut = time().rand(100,999);
                 $utt = ($ut % 1000 * intval(substr($ut,0,2)) + (100 + 0));
                 $uuid = uuid();
@@ -161,10 +161,10 @@
                 $content = getUrlContent($url,$vipcookie);
 
                 /* 错误登录,提示:{"previewTime":6,"previewType":"1","code":"Q00304","msg":"非法用户"}*/
-                echo $url;
-                echo "<br/>";
-                echo $content;
-                die();
+                //echo $url;
+                //echo "<br/>";
+                //echo $content;
+                //die();
                 
                 $json = json_decode($content,true);
                 $keys = $json['data']['t'];
